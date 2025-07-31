@@ -15,19 +15,16 @@ class RAGService:
     async def initialize(self):
         """Initialize the RAG service"""
         try:
-            # Test OpenAI connection
+            # Simple initialization without API call
             if self.settings.openai_api_key:
-                await self.client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": "test"}],
-                    max_tokens=1
-                )
                 self._ready = True
                 logger.info("RAG service initialized successfully")
             else:
-                logger.warning("OpenAI API key not provided")
+                logger.warning("OpenAI API key not provided - service will not be ready")
+                self._ready = False
         except Exception as e:
             logger.error(f"Failed to initialize RAG service: {str(e)}")
+            self._ready = False
     
     def is_ready(self) -> bool:
         return self._ready
