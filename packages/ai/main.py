@@ -58,13 +58,26 @@ async def get_db_connection():
 async def startup_event():
     """Initialize services on startup"""
     logger.info("Starting Grant Writing AI Service...")
-    await rag_service.initialize()
-    logger.info("RAG service initialized")
+    try:
+        await rag_service.initialize()
+        logger.info("RAG service initialized")
+    except Exception as e:
+        logger.warning(f"RAG service initialization failed: {e}")
+    logger.info("Service startup complete")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
     logger.info("Shutting down Grant Writing AI Service...")
+
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "message": "Grant Writing AI Service",
+        "version": "1.0.0",
+        "status": "running"
+    }
 
 @app.get("/health")
 async def health_check():
