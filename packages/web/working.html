@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grant-Writer Agent - CityNet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        },
+                        secondary: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            500: '#f59e0b',
+                            600: '#d97706'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+    
+    <script>
+        const { useState, useCallback, useEffect, createContext, useContext } = React;
+        const { createRoot } = ReactDOM;
+
+        // Simplified Grant Writer App
+        function GrantWriterApp() {
+            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [result, setResult] = useState(null);
+            const [formData, setFormData] = useState({
+                grantTitle: '',
+                citynetContext: '',
+                targetProgram: '',
+                rfpContent: ''
+            });
+
+            useEffect(() => {
+                if (!apiKey) {
+                    const userApiKey = prompt(
+                        'Please enter your Google Gemini API key:\n\n' +
+                        'Get one from: https://aistudio.google.com/app/apikey\n\n' +
+                        'This will be stored locally in your browser.'
+                    );
+                    if (userApiKey) {
+                        setApiKey(userApiKey);
+                        localStorage.setItem('gemini_api_key', userApiKey);
+                    }
+                }
+            }, []);
+
+            const handleFileUpload = useCallback((event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        setFormData(prev => ({
+                            ...prev,
+                            rfpContent: e.target.result
+                        }));
+                    };
+                    reader.readAsText(file);
+                }
+            }, []);
+
+            const generateProposal = useCallback(async () => {
+                if (!apiKey || !formData.grantTitle || !formData.citynetContext) {
+                    setError('Please fill in all required fields and API key');
+                    return;
+                }
+
+                setIsLoading(true);
+                setError(null);
+
+                try {
+                    // Simulate API call for now
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    setResult({
+                        overallSummary: `This ${formData.grantTitle} grant opportunity aligns well with CityNet's mission to provide community services and support. The proposal should focus on demonstrating measurable impact and sustainable outcomes.`,
+                        rfpSnapshot: {
+                            submissionDeadline: 'Sample deadline - check RFP document',
+                            clarificationDeadline: 'Sample clarification deadline',
+                            eligibilityRules: [
+                                'Must be a registered non-profit organization',
+                                'Must serve the target demographic',
+                                'Must have prior grant management experience'
+                            ],
+                            narrativePrompts: [
+                                'Statement of Need',
+                                'Project Description and Goals',
+                                'Implementation Plan',
+                                'Evaluation and Sustainability'
+                            ]
+                        }
+                    });
+                } catch (err) {
+                    setError('Error generating proposal: ' + err.message);
+                } finally {
+                    setIsLoading(false);
+                }
+            }, [apiKey, formData]);
+
+            const inputForm = React.createElement('div', {
+                className: 'bg-white rounded-lg shadow-lg p-6'
+            }, [
+                React.createElement('h2', {
+                    key: 'title',
+                    className: 'text-2xl font-bold text-gray-900 mb-6'
+                }, 'Grant Proposal Input'),
+
+                React.createElement('div', {
+                    key: 'form',
+                    className: 'space-y-6'
+                }, [
+                    // File Upload
+                    React.createElement('div', { key: 'file' }, [
+                        React.createElement('label', {
+                            key: 'file-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, 'RFP Document *'),
+                        React.createElement('input', {
+                            key: 'file-input',
+                            type: 'file',
+                            accept: '.txt,.pdf,.docx',
+                            onChange: handleFileUpload,
+                            className: 'w-full px-3 py-2 border border-gray-300 rounded-lg'
+                        })
+                    ]),
+
+                    // Grant Title
+                    React.createElement('div', { key: 'title-input' }, [
+                        React.createElement('label', {
+                            key: 'title-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, 'Grant Title *'),
+                        React.createElement('input', {
+                            key: 'title-field',
+                            type: 'text',
+                            value: formData.grantTitle,
+                            onChange: (e) => setFormData(prev => ({...prev, grantTitle: e.target.value})),
+                            placeholder: 'Enter the official name of the grant opportunity',
+                            className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500'
+                        })
+                    ]),
+
+                    // Target Program
+                    React.createElement('div', { key: 'program' }, [
+                        React.createElement('label', {
+                            key: 'program-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, 'Target Program Focus'),
+                        React.createElement('select', {
+                            key: 'program-select',
+                            value: formData.targetProgram,
+                            onChange: (e) => setFormData(prev => ({...prev, targetProgram: e.target.value})),
+                            className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500'
+                        }, [
+                            React.createElement('option', { key: 'none', value: '' }, 'Select a program (optional)'),
+                            React.createElement('option', { key: 'hud-ross', value: 'HUD ROSS' }, 'HUD Resident Opportunity and Supportive Services'),
+                            React.createElement('option', { key: 'hud-jobs', value: 'HUD Jobs Plus' }, 'HUD Jobs Plus'),
+                            React.createElement('option', { key: 'cdbg', value: 'HUD CDBG' }, 'Community Development Block Grant'),
+                        ])
+                    ]),
+
+                    // Context
+                    React.createElement('div', { key: 'context' }, [
+                        React.createElement('label', {
+                            key: 'context-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, 'CityNet Context & Past Proposal Snippets *'),
+                        React.createElement('textarea', {
+                            key: 'context-field',
+                            value: formData.citynetContext,
+                            onChange: (e) => setFormData(prev => ({...prev, citynetContext: e.target.value})),
+                            rows: 6,
+                            placeholder: 'Provide key organizational information, statistics, program details...',
+                            className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 resize-none'
+                        })
+                    ]),
+
+                    // Submit Button
+                    React.createElement('button', {
+                        key: 'submit',
+                        onClick: generateProposal,
+                        disabled: isLoading || !formData.grantTitle || !formData.citynetContext || !apiKey,
+                        className: `w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+                            isLoading || !formData.grantTitle || !formData.citynetContext || !apiKey
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-primary-600 hover:bg-primary-700'
+                        } text-white`
+                    }, isLoading ? '🔄 Generating...' : 'Generate Grant Proposal Aid')
+                ])
+            ]);
+
+            const outputDisplay = React.createElement('div', {
+                className: 'bg-white rounded-lg shadow-lg p-6'
+            }, [
+                error ? React.createElement('div', {
+                    key: 'error',
+                    className: 'bg-red-50 border border-red-200 rounded-lg p-4 mb-4'
+                }, [
+                    React.createElement('div', {
+                        key: 'error-title',
+                        className: 'font-medium text-red-900'
+                    }, 'Generation Failed'),
+                    React.createElement('div', {
+                        key: 'error-msg',
+                        className: 'text-sm text-red-700 mt-1'
+                    }, error)
+                ]) : null,
+
+                result ? React.createElement('div', {
+                    key: 'results',
+                    className: 'space-y-6'
+                }, [
+                    React.createElement('div', {
+                        key: 'summary',
+                        className: 'border-b border-gray-200 pb-4'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'summary-title',
+                            className: 'text-lg font-semibold text-gray-900 mb-2'
+                        }, '📋 Overall Summary'),
+                        React.createElement('p', {
+                            key: 'summary-text',
+                            className: 'text-gray-700'
+                        }, result.overallSummary)
+                    ]),
+
+                    React.createElement('div', {
+                        key: 'snapshot'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'snapshot-title',
+                            className: 'text-lg font-semibold text-gray-900 mb-4'
+                        }, '📊 RFP Snapshot & Analysis'),
+                        React.createElement('div', {
+                            key: 'deadlines',
+                            className: 'mb-4'
+                        }, [
+                            React.createElement('h4', {
+                                key: 'deadlines-title',
+                                className: 'font-medium text-gray-800 mb-2'
+                            }, 'Key Deadlines'),
+                            React.createElement('div', { key: 'deadline-list', className: 'text-sm' }, [
+                                React.createElement('div', { key: 'sub' }, `Submission: ${result.rfpSnapshot.submissionDeadline}`),
+                                React.createElement('div', { key: 'clar' }, `Clarifications: ${result.rfpSnapshot.clarificationDeadline}`)
+                            ])
+                        ]),
+                        React.createElement('div', {
+                            key: 'eligibility'
+                        }, [
+                            React.createElement('h4', {
+                                key: 'elig-title',
+                                className: 'font-medium text-gray-800 mb-2'
+                            }, 'Eligibility Rules'),
+                            React.createElement('ul', {
+                                key: 'elig-list',
+                                className: 'text-sm space-y-1'
+                            }, result.rfpSnapshot.eligibilityRules.map((rule, i) => 
+                                React.createElement('li', { key: i, className: 'flex items-start' }, [
+                                    React.createElement('span', { key: 'bullet', className: 'text-primary-500 mr-2' }, '•'),
+                                    rule
+                                ])
+                            ))
+                        ])
+                    ])
+                ]) : React.createElement('div', {
+                    key: 'welcome',
+                    className: 'text-center py-12'
+                }, [
+                    React.createElement('div', {
+                        key: 'icon',
+                        className: 'text-6xl mb-4'
+                    }, '🚀'),
+                    React.createElement('div', {
+                        key: 'title',
+                        className: 'text-xl font-semibold text-gray-700 mb-2'
+                    }, 'Welcome to Grant-Writer Agent'),
+                    React.createElement('div', {
+                        key: 'desc',
+                        className: 'text-gray-500'
+                    }, 'Upload an RFP document and provide context to generate comprehensive grant proposal assistance.')
+                ])
+            ]);
+
+            return React.createElement('div', {
+                className: 'min-h-screen bg-gray-50'
+            }, [
+                // Header
+                React.createElement('header', {
+                    key: 'header',
+                    className: 'bg-white shadow-sm border-b border-gray-200'
+                }, [
+                    React.createElement('div', {
+                        key: 'header-content',
+                        className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'
+                    }, [
+                        React.createElement('div', {
+                            key: 'header-inner',
+                            className: 'flex items-center justify-between h-16'
+                        }, [
+                            React.createElement('div', {
+                                key: 'logo',
+                                className: 'flex items-center space-x-3'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'icon',
+                                    className: 'text-2xl'
+                                }, '🏛️'),
+                                React.createElement('div', { key: 'text' }, [
+                                    React.createElement('h1', {
+                                        key: 'title',
+                                        className: 'text-xl font-bold text-gray-900'
+                                    }, 'Grant-Writer Agent'),
+                                    React.createElement('p', {
+                                        key: 'subtitle',
+                                        className: 'text-sm text-gray-500'
+                                    }, 'CityNet Grant Proposal Assistant')
+                                ])
+                            ]),
+                            React.createElement('div', {
+                                key: 'powered',
+                                className: 'text-sm text-gray-500'
+                            }, 'Powered by Google Gemini AI')
+                        ])
+                    ])
+                ]),
+
+                // Main Content
+                React.createElement('main', {
+                    key: 'main',
+                    className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
+                }, [
+                    React.createElement('div', {
+                        key: 'grid',
+                        className: 'grid lg:grid-cols-2 gap-8'
+                    }, [
+                        inputForm,
+                        outputDisplay
+                    ])  
+                ])
+            ]);
+        }
+
+        // Render the app
+        const container = document.getElementById('root');
+        const root = createRoot(container);
+        root.render(React.createElement(GrantWriterApp));
+    </script>
+</body>
+</html>

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProposalCopilot - Grant Writing Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        secondary: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706' }
+                    },
+                    animation: {
+                        'bounce-dots': 'bounce 1.4s ease-in-out infinite both',
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+    
+    <script>
+        const { useState, useCallback, useEffect, useRef } = React;
+        const { createRoot } = ReactDOM;
+
+        // Multi-Agent Architecture Implementation
+        class MasterCoordinator {
+            constructor(geminiApiKey, projectContext) {
+                this.apiKey = geminiApiKey;
+                this.projectContext = projectContext;
+                this.agents = {
+                    decomposer: new RfpDecomposerAgent(),
+                    eligibility: new EligibilityAgent(),
+                    dataRetriever: new DataRetrieverAgent(),
+                    narrativeDrafter: new NarrativeDrafterAgent(),
+                    budgetBuilder: new BudgetBuilderAgent(),
+                    complianceAuditor: new ComplianceAuditorAgent(),
+                    reviewer: new ReviewerAgent()
+                };
+                this.workflowState = {};
+            }
+
+            async processRfp(rfpContent, onProgress) {
+                const tasks = [
+                    { name: "Parsing RFP document...", agent: 'decomposer', input: rfpContent },
+                    { name: "Checking eligibility requirements...", agent: 'eligibility' },
+                    { name: "Retrieving relevant data and metrics...", agent: 'dataRetriever' },
+                    { name: "Drafting narrative sections...", agent: 'narrativeDrafter' },
+                    { name: "Building budget framework...", agent: 'budgetBuilder' },
+                    { name: "Running compliance audit...", agent: 'complianceAuditor' },
+                    { name: "Synthesizing final proposal...", agent: 'reviewer' }
+                ];
+
+                let results = {};
+                
+                for (let i = 0; i < tasks.length; i++) {
+                    const task = tasks[i];
+                    onProgress(task.name, (i + 1) / tasks.length * 100);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+                    
+                    const result = await this.agents[task.agent].process(
+                        task.input || results, 
+                        this.projectContext
+                    );
+                    results[task.agent] = result;
+                }
+
+                return this.synthesizeResults(results);
+            }
+
+            synthesizeResults(agentResults) {
+                return {
+                    rfpSummary: agentResults.decomposer,
+                    eligibilityCheck: agentResults.eligibility,
+                    keyMetrics: agentResults.dataRetriever,
+                    narrativeSections: agentResults.narrativeDrafter,
+                    budgetFramework: agentResults.budgetBuilder,
+                    complianceChecklist: agentResults.complianceAuditor,
+                    finalRecommendations: agentResults.reviewer
+                };
+            }
+        }
+
+        // Specialized Agent Classes
+        class RfpDecomposerAgent {
+            async process(rfpContent) {
+                return {
+                    meta: {
+                        title: "Sample Grant Opportunity",
+                        agency: "Department of Example",
+                        cfda: "12.345",
+                        submission_deadline: "2024-03-15",
+                        qa_deadline: "2024-02-15"
+                    },
+                    eligibility_rules: [
+                        "Must be a 501(c)(3) nonprofit organization",
+                        "Must serve low-income communities",
+                        "Must have prior grant management experience"
+                    ],
+                    required_sections: [
+                        { title: "Statement of Need", page_limit: 3 },
+                        { title: "Project Description", page_limit: 5 },
+                        { title: "Goals and Objectives", page_limit: 2 },
+                        { title: "Implementation Plan", page_limit: 4 },
+                        { title: "Evaluation Plan", page_limit: 2 }
+                    ],
+                    attachments: [
+                        "IRS determination letter",
+                        "Organizational budget",
+                        "Letters of support"
+                    ]
+                };
+            }
+        }
+
+        class EligibilityAgent {
+            async process(decomposerResults, projectContext) {
+                return {
+                    overall_status: "Qualified",
+                    rule_checks: [
+                        { rule: "501(c)(3) status", status: "Yes", rationale: "Organization is registered nonprofit" },
+                        { rule: "Serves low-income communities", status: "Yes", rationale: "Target demographics align" },
+                        { rule: "Grant management experience", status: "Unclear", rationale: "Need to verify previous grants", missing_info: "List of previous federal grants" }
+                    ]
+                };
+            }
+        }
+
+        class DataRetrieverAgent {
+            async process(decomposerResults, projectContext) {
+                return {
+                    kpis: [
+                        { name: "Households served annually", value: "2,500", year: "2023", source: "Internal records" },
+                        { name: "Program completion rate", value: "87%", year: "2023", source: "Performance dashboard" },
+                        { name: "Community partnerships", value: "15", year: "2024", source: "Partnership agreements" },
+                        { name: "Jobs created/retained", value: null, year: null, source: "Data unavailable" }
+                    ]
+                };
+            }
+        }
+
+        class NarrativeDrafterAgent {
+            async process(allResults, projectContext) {
+                return {
+                    sections: [
+                        {
+                            title: "Statement of Need",
+                            content: "Our community faces significant challenges in accessing essential services. Recent data shows that {{kpi1}} households require support annually, with completion rates reaching {{kpi2}}. This demonstrates both the scale of need and our organization's proven ability to deliver results.",
+                            word_count: 85
+                        },
+                        {
+                            title: "Project Description", 
+                            content: "This initiative will expand our proven service model to reach additional underserved populations. Building on our network of {{kpi3}} community partnerships, we will implement evidence-based interventions that have consistently achieved high success rates.",
+                            word_count: 92
+                        }
+                    ]
+                };
+            }
+        }
+
+        class BudgetBuilderAgent {
+            async process(allResults, projectContext) {
+                return {
+                    budget_lines: [
+                        { category: "Personnel", amount: 75000, percentage: 60 },
+                        { category: "Supplies & Materials", amount: 15000, percentage: 12 },
+                        { category: "Travel", amount: 5000, percentage: 4 },
+                        { category: "Other Direct Costs", amount: 30000, percentage: 24 }
+                    ],
+                    total_budget: 125000,
+                    narrative: "Budget allocations prioritize direct service delivery with 60% dedicated to qualified staff. Supply costs support program materials and technology needs. Travel enables essential community outreach and partnership meetings."
+                };
+            }
+        }
+
+        class ComplianceAuditorAgent {
+            async process(allResults, projectContext) {
+                return {
+                    checklist: [
+                        { item: "Page limits adhered to", status: "ok", suggestion: null },
+                        { item: "Required attachments included", status: "needs_review", suggestion: "Verify IRS determination letter is current" },
+                        { item: "Budget totals accurate", status: "ok", suggestion: null },
+                        { item: "Deadline compliance", status: "ok", suggestion: "Submit 48 hours early" }
+                    ]
+                };
+            }
+        }
+
+        class ReviewerAgent {
+            async process(allResults, projectContext) {
+                return {
+                    strengths: [
+                        "Strong evidence base with concrete metrics",
+                        "Clear alignment with funder priorities",
+                        "Experienced organization with proven track record"
+                    ],
+                    improvements: [
+                        "Add more specific outcome targets",
+                        "Include stronger community voice/testimonials",
+                        "Clarify sustainability plan beyond grant period"
+                    ],
+                    next_steps: [
+                        "Review and edit narrative sections",
+                        "Gather missing attachments",
+                        "Schedule final review meeting",
+                        "Prepare submission materials"
+                    ]
+                };
+            }
+        }
+
+        // Main Chat Interface Component
+        function ProposalCopilot() {
+            const [messages, setMessages] = useState([
+                {
+                    id: 1,
+                    type: 'assistant',
+                    content: "👋 **Hello! I'm ProposalCopilot**, your AI-powered grant writing assistant.\n\nI'll help you transform any RFP into a compelling, compliant proposal using my team of specialized agents. Here's how we can work together:\n\n📄 **Upload an RFP** - I'll analyze requirements and eligibility\n💬 **Chat about your project** - Tell me about your organization and goals\n🔄 **Watch the magic happen** - My agent swarm will draft your proposal\n📋 **Review & refine** - Edit sections and ensure compliance\n📤 **Export & submit** - Get your polished proposal ready for submission\n\n*What grant opportunity are you working on today?*",
+                    timestamp: new Date()
+                }
+            ]);
+            const [inputText, setInputText] = useState('');
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+            const [projectContext, setProjectContext] = useState('');
+            const [processingStep, setProcessingStep] = useState('');
+            const [processingProgress, setProcessingProgress] = useState(0);
+            const messagesEndRef = useRef(null);
+            const fileInputRef = useRef(null);
+
+            useEffect(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages]);
+
+            useEffect(() => {
+                if (!apiKey) {
+                    const userApiKey = prompt(
+                        'Welcome to ProposalCopilot! 🚀\n\n' +
+                        'Please enter your Google Gemini API key to get started:\n' +
+                        'Get one from: https://aistudio.google.com/app/apikey\n\n' +
+                        'This will be stored securely in your browser.'
+                    );
+                    if (userApiKey) {
+                        setApiKey(userApiKey);
+                        localStorage.setItem('gemini_api_key', userApiKey);
+                    }
+                }
+            }, []);
+
+            const addMessage = useCallback((type, content, metadata = {}) => {
+                const newMessage = {
+                    id: Date.now() + Math.random(),
+                    type,
+                    content,
+                    timestamp: new Date(),
+                    ...metadata
+                };
+                setMessages(prev => [...prev, newMessage]);
+                return newMessage.id;
+            }, []);
+
+            const handleSendMessage = useCallback(async () => {
+                if (!inputText.trim()) return;
+
+                const userMessage = inputText;
+                setInputText('');
+                addMessage('user', userMessage);
+
+                // Handle special commands
+                if (userMessage.toLowerCase().startsWith('/submit')) {
+                    addMessage('assistant', '📄 **Generating final proposal package...**\n\nI\'ll compile all sections, run final compliance checks, and prepare your submission-ready document.\n\n*This may take a few moments...*');
+                    setIsProcessing(true);
+                    
+                    setTimeout(() => {
+                        setIsProcessing(false);
+                        addMessage('assistant', '✅ **Proposal package complete!**\n\n📎 **grant-proposal-final.docx** (Ready for download)\n📋 **compliance-checklist.pdf** (All items verified)\n📊 **budget-worksheet.xlsx** (Detailed breakdown)\n\n*Your proposal is ready for submission. Good luck!* 🍀', { hasDownload: true });
+                    }, 3000);
+                    return;
+                }
+
+                if (userMessage.toLowerCase().includes('help') || userMessage.toLowerCase().includes('command')) {
+                    addMessage('assistant', '🔧 **Available Commands:**\n\n`/submit` - Generate final proposal package\n`/upload` - Upload RFP document\n`/context` - Update project context\n`/status` - View current progress\n\n**File Upload:** Drag and drop any RFP document or click the 📎 attachment button.\n\n**Tips:** Be specific about your organization, target population, and project goals for better results!');
+                    return;
+                }
+
+                // Simulate AI response
+                setIsProcessing(true);
+                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+                
+                const responses = [
+                    "That's helpful context! Tell me more about your target community and the specific challenges you're addressing.",
+                    "Great! I can help you develop that into a compelling narrative. What evidence or data do you have to support this approach?",
+                    "Excellent direction. Once you upload the RFP, I'll analyze how to best position this work to meet the funder's priorities.",
+                    "I see the potential here. Let's make sure we capture the unique value your organization brings to this opportunity."
+                ];
+                
+                setIsProcessing(false);
+                addMessage('assistant', responses[Math.floor(Math.random() * responses.length)]);
+            }, [inputText, addMessage]);
+
+            const handleFileUpload = useCallback(async (file) => {
+                if (!file) return;
+
+                addMessage('user', `📄 Uploaded: **${file.name}** (${(file.size / 1024).toFixed(1)}KB)`, { file });
+                addMessage('assistant', '🔍 **Perfect! I\'ve received your RFP.**\n\nBefore I analyze this with my agent swarm, I need some context about your organization and project. Please tell me:\n\n• **Organization name and mission**\n• **Target population/community**\n• **Key programs and services**\n• **Previous grant experience**\n• **Specific goals for this opportunity**\n\nThe more detail you provide, the better I can tailor the proposal! ✨');
+                
+                // If we have project context, start processing
+                if (projectContext.trim()) {
+                    setTimeout(() => processRfpWithSwarm(file), 2000);
+                }
+            }, [projectContext]);
+
+            const processRfpWithSwarm = useCallback(async (file) => {
+                addMessage('assistant', '🚀 **Activating my agent swarm to analyze your RFP...**\n\nMy specialized team is now working on your proposal:');
+                
+                setIsProcessing(true);
+                
+                const coordinator = new MasterCoordinator(apiKey, projectContext);
+                
+                try {
+                    const results = await coordinator.processRfp(
+                        'RFP content placeholder',
+                        (step, progress) => {
+                            setProcessingStep(step);
+                            setProcessingProgress(progress);
+                        }
+                    );
+                    
+                    setIsProcessing(false);
+                    setProcessingStep('');
+                    setProcessingProgress(0);
+                    
+                    // Display results
+                    addMessage('assistant', '✅ **Analysis Complete!** Here\'s what my agents discovered:\n\n' + formatSwarmResults(results), { results, expandable: true });
+                    
+                } catch (error) {
+                    setIsProcessing(false);
+                    addMessage('assistant', '❌ **Oops!** Something went wrong during analysis. Please try uploading the RFP again or check your API key.');
+                }
+            }, [apiKey, projectContext, addMessage]);
+
+            const formatSwarmResults = (results) => {
+                return `## 📋 RFP Summary
+**${results.rfpSummary.meta.title}**
+*${results.rfpSummary.meta.agency} | Due: ${results.rfpSummary.meta.submission_deadline}*
+
+## ✅ Eligibility Status: ${results.eligibilityCheck.overall_status}
+
+## 📊 Key Metrics Found
+${results.keyMetrics.kpis.map(kpi => `• **${kpi.name}**: ${kpi.value || 'Missing'}`).join('\n')}
+
+## 📝 Draft Sections Ready
+${results.narrativeSections.sections.map(section => `• ${section.title} (${section.word_count} words)`).join('\n')}
+
+## 💰 Budget Framework: $${results.budgetFramework.total_budget.toLocaleString()}
+
+*Ready to review and refine? Use \`/submit\` when you're satisfied with the draft!*`;
+            };
+
+            const handleKeyPress = useCallback((e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            }, [handleSendMessage]);
+
+            const handleFileDrop = useCallback((e) => {
+                e.preventDefault();
+                const files = Array.from(e.dataTransfer.files);
+                if (files.length > 0) {
+                    handleFileUpload(files[0]);
+                }
+            }, [handleFileUpload]);
+
+            return React.createElement('div', {
+                className: 'flex flex-col h-screen bg-gray-50',
+                onDrop: handleFileDrop,
+                onDragOver: (e) => e.preventDefault()
+            }, [
+                // Header
+                React.createElement('header', {
+                    key: 'header',
+                    className: 'bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between'
+                }, [
+                    React.createElement('div', {
+                        key: 'title',
+                        className: 'flex items-center space-x-3'
+                    }, [
+                        React.createElement('div', {
+                            key: 'icon',
+                            className: 'w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold'
+                        }, '🤖'),
+                        React.createElement('div', { key: 'text' }, [
+                            React.createElement('h1', {
+                                key: 'h1',
+                                className: 'text-lg font-semibold text-gray-900'
+                            }, 'ProposalCopilot'),
+                            React.createElement('p', {
+                                key: 'p',
+                                className: 'text-xs text-gray-500'
+                            }, 'AI Grant Writing Assistant')
+                        ])
+                    ]),
+                    React.createElement('div', {
+                        key: 'status',
+                        className: 'text-sm text-gray-500'
+                    }, `${messages.length} messages`)
+                ]),
+
+                // Messages
+                React.createElement('div', {
+                    key: 'messages',
+                    className: 'flex-1 overflow-y-auto p-4 space-y-4'
+                }, [
+                    ...messages.map(message => 
+                        React.createElement('div', {
+                            key: message.id,
+                            className: `flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`
+                        }, [
+                            React.createElement('div', {
+                                key: 'bubble',
+                                className: `max-w-3xl rounded-2xl px-4 py-3 ${
+                                    message.type === 'user' 
+                                        ? 'bg-primary-600 text-white' 
+                                        : 'bg-white shadow-sm border border-gray-200'
+                                }`
+                            }, [
+                                React.createElement('div', {
+                                    key: 'content',
+                                    className: message.type === 'user' ? 'text-white' : 'text-gray-800',
+                                    style: { whiteSpace: 'pre-wrap' }
+                                }, message.content),
+                                message.hasDownload ? React.createElement('div', {
+                                    key: 'download',
+                                    className: 'mt-3 flex space-x-2'
+                                }, [
+                                    React.createElement('button', {
+                                        key: 'btn1',
+                                        className: 'px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700'
+                                    }, '📄 Download Proposal'),
+                                    React.createElement('button', {
+                                        key: 'btn2', 
+                                        className: 'px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700'
+                                    }, '📋 Checklist'),
+                                    React.createElement('button', {
+                                        key: 'btn3',
+                                        className: 'px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700'
+                                    }, '📊 Budget')
+                                ]) : null
+                            ])
+                        ])
+                    ),
+
+                    // Processing indicator
+                    isProcessing ? React.createElement('div', {
+                        key: 'processing',
+                        className: 'flex justify-start'
+                    }, [
+                        React.createElement('div', {
+                            key: 'processing-bubble',
+                            className: 'bg-white shadow-sm border border-gray-200 rounded-2xl px-4 py-3'
+                        }, [
+                            React.createElement('div', {
+                                key: 'processing-content',
+                                className: 'flex items-center space-x-3'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'spinner',
+                                    className: 'flex space-x-1'
+                                }, [
+                                    React.createElement('div', { key: 'dot1', className: 'w-2 h-2 bg-primary-600 rounded-full animate-bounce-dots', style: { animationDelay: '0ms' } }),
+                                    React.createElement('div', { key: 'dot2', className: 'w-2 h-2 bg-primary-600 rounded-full animate-bounce-dots', style: { animationDelay: '150ms' } }),
+                                    React.createElement('div', { key: 'dot3', className: 'w-2 h-2 bg-primary-600 rounded-full animate-bounce-dots', style: { animationDelay: '300ms' } })
+                                ]),
+                                React.createElement('div', { key: 'text' }, [
+                                    React.createElement('div', {
+                                        key: 'step',
+                                        className: 'text-sm text-gray-700'
+                                    }, processingStep || 'Processing...'),
+                                    processingProgress > 0 ? React.createElement('div', {
+                                        key: 'progress',
+                                        className: 'w-48 bg-gray-200 rounded-full h-1.5 mt-1'
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'bar',
+                                            className: 'bg-primary-600 h-1.5 rounded-full transition-all duration-300',
+                                            style: { width: `${processingProgress}%` }
+                                        })
+                                    ]) : null
+                                ])
+                            ])
+                        ])
+                    ]) : null,
+
+                    React.createElement('div', { key: 'end', ref: messagesEndRef })
+                ]),
+
+                // Input area
+                React.createElement('div', {
+                    key: 'input-area',
+                    className: 'border-t border-gray-200 bg-white p-4'
+                }, [
+                    React.createElement('div', {
+                        key: 'input-container',
+                        className: 'flex items-end space-x-3 max-w-4xl mx-auto'
+                    }, [
+                        React.createElement('button', {
+                            key: 'attach',
+                            onClick: () => fileInputRef.current?.click(),
+                            className: 'p-2 text-gray-400 hover:text-gray-600 transition-colors'
+                        }, '📎'),
+                        React.createElement('input', {
+                            key: 'file-input',
+                            ref: fileInputRef,
+                            type: 'file',
+                            accept: '.pdf,.docx,.doc,.txt',
+                            onChange: (e) => handleFileUpload(e.target.files[0]),
+                            className: 'hidden'
+                        }),
+                        React.createElement('div', {
+                            key: 'text-container',
+                            className: 'flex-1 relative'
+                        }, [
+                            React.createElement('textarea', {
+                                key: 'textarea',
+                                value: inputText,
+                                onChange: (e) => setInputText(e.target.value),
+                                onKeyPress: handleKeyPress,
+                                placeholder: 'Ask me about grant writing, upload an RFP, or type /help for commands...',
+                                rows: inputText.split('\n').length || 1,
+                                className: 'w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none max-h-32',
+                                disabled: isProcessing
+                            })
+                        ]),
+                        React.createElement('button', {
+                            key: 'send',
+                            onClick: handleSendMessage,
+                            disabled: !inputText.trim() || isProcessing,
+                            className: `p-3 rounded-full transition-colors ${
+                                inputText.trim() && !isProcessing
+                                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`
+                        }, '▲')
+                    ])
+                ])
+            ]);
+        }
+
+        // Render the app
+        const container = document.getElementById('root');
+        const root = createRoot(container); 
+        root.render(React.createElement(ProposalCopilot));
+    </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector extension
+  postgres:
+    image: ankane/pgvector:v0.5.1
+    environment:
+      POSTGRES_DB: grant_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and job queues
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Initialize database schema
+  db-init:
+    image: postgres:15
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: grant_platform
+      PGUSER: postgres
+      PGPASSWORD: password
+    volumes:
+      - ./packages/web/src/api/database/schema.sql:/schema.sql
+    command: |
+      sh -c "
+        echo 'Waiting for database to be ready...'
+        sleep 5
+        echo 'Initializing database schema...'
+        psql -f /schema.sql
+        echo 'Database schema initialized successfully!'
+      "
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: grant-platform-test

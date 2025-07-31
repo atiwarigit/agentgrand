@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./dist/api",
+    "rootDir": "./src/api",
+    "module": "CommonJS",
+    "target": "ES2020"
+  },
+  "include": ["src/api/**/*"],
+  "exclude": ["src/frontend/**/*", "dist", "node_modules"]
+}
