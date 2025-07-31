@@ -30,4 +30,4 @@ ENV PYTHONUNBUFFERED=1
 #     CMD python -c "import requests; requests.get('http://localhost:$PORT/health')"
 
 # Start command
-CMD uvicorn main_minimal:app --host 0.0.0.0 --port $PORT
+CMD ["sh", "-c", "uvicorn main_minimal:app --host 0.0.0.0 --port $PORT"]
